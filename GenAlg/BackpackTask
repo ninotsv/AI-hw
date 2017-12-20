@@ -1,0 +1,105 @@
+import pyeasyga
+from pyeasyga.pyeasyga import GeneticAlgorithm
+import math
+import  requests
+#***********************
+#объявление
+PreBackPack=[]
+BackPack=[]
+j=1
+weightRes=0
+SizeRes=0
+#конец
+#читаем ффайл
+# нужные переменные для взятия грузоподъемности и вместимости
+with open('36.txt') as f:
+    ffile = f.readlines()
+    # грузоподъемность
+    PAYLOAD = int(ffile[0].split(" ")[0])
+    # вместимость
+    CAPACITY = int(ffile[0].split(" ")[1])
+files=open('36.txt')
+files.readline()
+#file=file.readline()
+#заливаем данные из файла в 'PreBackPack'  с параметрами
+def reconfiguration():
+    item = 1
+    for str in files:
+        SomeVar=str.split()
+        PreBackPack.append(
+            [
+               # items
+                    item,
+               # weight-вес
+                    int(SomeVar[0]),
+               # sizeобъем
+                    float(SomeVar[1]),
+                #price-ценность
+                    int(SomeVar[2])
+            ]
+        )
+        #print(SomeVar)
+        item+=1
+    files.close()
+reconfiguration()
+print(PreBackPack)
+#инициализируем класс GeneticAlgorithm
+ga = GeneticAlgorithm(PreBackPack)
+#http://pythonhosted.org/pyeasyga/usage.html#simple
+def fitness(individual, data):
+    wei=0
+    siz=0
+    pri = 0
+    #проходим по всем
+    for (selected,item) in zip(individual,data):
+        if selected:
+            # изменяем значения
+            wei +=item[1]
+            siz += item[2]
+            pri += item[3]
+    #если где-то перебрали
+    if (wei>PAYLOAD) or(siz>CAPACITY):
+        pri=0
+    return  pri
+#устанавливаем и запускаем функции
+ga.fitness_function = fitness
+ga.run()
+#печатаем набор с лучей пригодностью
+print(ga.best_individual())
+#получаем набор с лучшей пригодностью и выводим его
+someth = ga.best_individual()
+print(someth)
+#проходимся и не нулевые элементы суммируем
+for i in someth[1]:
+    if i != 0:
+        BackPack.append(j)
+        weightRes += PreBackPack[i - 1][1]
+        SizeRes += PreBackPack[i - 1][2]
+    j+=1
+print(weightRes,round(SizeRes,2))
+print(BackPack)
+print(someth[0])
+for individual in ga.last_generation():
+    print (individual)
+#вывод,согласно формату указанному в описанию к ЛР
+format='https://cit-home1.herokuapp.com/api/ga_homework'
+'''json={
+        "user":36,
+        "1":{
+                #"item":BackPack,
+                "weight":weightRes,
+                "size":round(SizeRes,2),
+                "price":someth[1]
+            }
+    }'''
+json={
+        "user":36,
+        "1":{
+                "items":BackPack,
+                "weight":weightRes,
+                "volume":round(SizeRes),
+                "value":someth[0]
+            }
+    }
+head={'content-type':'application/json'}
+#print((requests.post(format,json=json,headers=head)).json())
